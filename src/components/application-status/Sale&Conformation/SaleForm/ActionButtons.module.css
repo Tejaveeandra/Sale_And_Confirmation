@@ -1,0 +1,35 @@
+.action_buttons_container {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.blue_arrow_icon_figure {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.blue_arrow_icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.star_tick_icon_figure {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.star_tick_icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}  

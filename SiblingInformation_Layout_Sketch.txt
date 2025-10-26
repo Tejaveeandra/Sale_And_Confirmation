@@ -1,0 +1,80 @@
+┌─────────────────────────────────────────────────────────┐
+│  Sibling Information ────────────────────────────────── │
+├─────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────┐   │
+│  │  Sibling 1                    [Clear] [✕]       │   │
+│  │  ┌─────────┐ ┌─────────────┐ ┌─────────────┐    │   │
+│  │  │Full Name│ │Relation Type│ │Select Class │    │   │
+│  │  └─────────┘ └─────────────┘ └─────────────┘    │   │
+│  │  ┌─────────┐ ┌─────────────┐ ┌─────────────┐    │   │
+│  │  │Gender   │ │School Name  │ │             │    │   │
+│  │  └─────────┘ └─────────────┘ └─────────────┘    │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                       │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │  Sibling 2                    [Clear] [✕]       │   │
+│  │  ┌─────────┐ ┌─────────────┐ ┌─────────────┐    │   │
+│  │  │Full Name│ │Relation Type│ │Select Class │    │   │
+│  │  └─────────┘ └─────────────┘ └─────────────┘    │   │
+│  │  ┌─────────┐ ┌─────────────┐ ┌─────────────┐    │   │
+│  │  │Gender   │ │School Name  │ │             │    │   │
+│  │  └─────────┘ └─────────────┘ └─────────────┘    │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                       │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │  [Add Another Sibling] [Add Annexure]           │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                       │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │  Annexure Documents:                           │   │
+│  │  • file1.pdf (1000 KB) [Remove]                │   │
+│  │  • file2.pdf (500 KB)  [Remove]                │   │
+│  └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+
+COMPONENT STRUCTURE:
+====================
+
+1. SIBLING BOXES:
+   - Each sibling has a bordered box
+   - Header with "Sibling X" title
+   - Action buttons positioned above border (Clear & ✕)
+   - 3-column grid layout for form fields
+   - All fields are disabled (read-only)
+
+2. ACTION BUTTONS (Above each sibling box):
+   - Clear Button: Blue rounded button (#3425ff)
+   - Close Button: Red circular button (✕)
+   - Positioned absolutely above the border
+   - Disabled for confirmation mode
+
+3. FORM FIELDS (3-column grid):
+   Row 1: Full Name | Relation Type | Select Class
+   Row 2: Gender    | School Name  | (empty)
+
+4. ACTION BUTTONS SECTION:
+   - "Add Another Sibling" button (disabled)
+   - "Add Annexure" button (disabled)
+
+5. ANNEXURE SECTION:
+   - File list with names and sizes
+   - Remove buttons for each file (disabled)
+
+CSS CLASSES USED:
+================
+- .siblingBox: Main container for each sibling
+- .siblingHeader: Header with title and action buttons
+- .actionBtns: Container for Clear/Close buttons
+- .clearBtn: Blue rounded Clear button
+- .closeBtn: Red circular Close button
+- .siblingFields: 3-column grid for form fields
+- .addSiblingBtn: Action buttons styling
+- .addAnnexures: Annexure button styling
+
+POSITIONING:
+============
+- Action buttons: position: absolute, top: -30px, right: 0px
+- Sibling boxes: relative positioning
+- Grid layout: 3 columns with 40px gap
+- Responsive: Single column on mobile
+

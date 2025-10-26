@@ -1,0 +1,20 @@
+.search_bar {
+  display: flex;
+display: flex;
+width: 31%;
+padding: 7px 85px 10px 12px;
+align-items: center;
+gap: 10px;
+border-radius: 31px;
+border: 1px solid #DCDCDC;
+background: #FFF;
+}
+
+.search_application_input{
+    
+    border:none;
+    outline:none;
+    font-size: 16px;
+}
+
+

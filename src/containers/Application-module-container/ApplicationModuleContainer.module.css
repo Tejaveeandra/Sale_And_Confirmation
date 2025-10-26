@@ -1,0 +1,37 @@
+
+.main_content {
+  width: calc(100vw - 17%);
+  height: calc(100vh - 54px); /* Fixed height to prevent full page scrolling */
+  padding: 10px;
+  box-sizing: border-box;
+  margin-top: 54px;
+  margin-left: 17%;
+  position: relative;
+  overflow-y: auto; /* Enable scrolling for main content */
+  overflow-x: hidden; /* Hide horizontal scrollbar */
+}
+
+.analytics_wrapper {
+  /* display: flex;  */
+  margin-top: 10px;
+  gap: 15px;
+  width: 100%;
+}
+
+
+
+
+.analytics_wrapper.row {
+  flex-direction: row;
+}
+
+
+.analytics_wrapper.column {
+  flex-direction: column;
+}
+
+
+
+.prev_years_graphs_section {
+  width: 30%;
+}

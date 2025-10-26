@@ -1,0 +1,68 @@
+/* ProfilePhoto Component Styles */
+.profile_photo_form_field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: none;
+ 
+}
+
+.profile_photo_upload_container {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile_photo_label {
+  cursor: pointer;
+  text-align: center;
+}
+
+.profile_photo_upload_circle {
+  width: 142px;
+  height: 142px;
+  border-radius: 180px;
+  border: 2px solid #3425ff;
+  background-color: #e8e6ff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.profile_photo_upload_icon_figure {
+  margin-bottom: 8px;
+}
+
+.profile_photo_upload_svg {
+  width: 31px;
+  height: 31px;
+}
+
+.profile_photo_preview_image {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profile_photo_upload_text {
+  font-size: 13px;
+  font-weight: 400;
+  color: #000000;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.profile_photo_file_size_limit {
+  color: #d32f2f;
+  font-size: 12px;
+}
+
+.profile_photo_error {
+  color: red;
+  font-size: 12px;
+  margin-top: 5px;
+}
