@@ -4,15 +4,24 @@ import { ReactComponent as TrendingUpIcon } from '../../../../../../assets/appli
 import styles from './PaymentFormActions.module.css';
 
 const PaymentFormActions = ({ onSubmit, values, isSubmitting, buttonText = "Finish Sale" }) => {
+  const handleClick = async (e) => {
+    e.preventDefault();
+    try {
+      await onSubmit(values);
+    } catch (error) {
+      console.error('Form submission error:', error);
+    }
+  };
+
   return (
     <div className={styles.form_actions}>
       <Button
         buttonname={buttonText}
         righticon={<TrendingUpIcon />}
-        onClick={() => onSubmit(values)}
+        onClick={handleClick}
         variant="primary"
         width="auto"
-        type="submit"
+        type="button"
         disabled={isSubmitting}
       />
     </div>

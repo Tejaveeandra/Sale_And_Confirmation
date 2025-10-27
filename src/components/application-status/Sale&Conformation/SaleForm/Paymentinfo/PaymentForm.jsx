@@ -9,20 +9,44 @@ import PaymentFormFields from './components/PaymentFormFields';
 import PaymentFormActions from './components/PaymentFormActions';
 import styles from './PaymentForm.module.css';
 
-const PaymentForm = ({ onClose, onPaymentSuccess, isConfirmationMode = false }) => {
+const PaymentForm = ({ onClose, onPaymentSuccess, isConfirmationMode = false, onSubmitCompleteSale }) => {
   const [selectedPaymentMode, setSelectedPaymentMode] = useState("Cash");
   const { isSubmitting, error, handleSubmit } = usePaymentSubmission();
 
   const onSubmit = async (values) => {
+    console.log('PaymentForm onSubmit called with values:', values);
+    console.log('Selected payment mode:', selectedPaymentMode);
+    
     const result = await handleSubmit(values, selectedPaymentMode, onClose);
     
-    // Pass payment data to parent orchestration
-    if (result && result.success && onPaymentSuccess) {
-      onPaymentSuccess({
-        ...values,
-        paymentMode: selectedPaymentMode
-      });
-    }
+    console.log('PaymentForm handleSubmit result:', result);
+    
+      // Pass payment data to parent orchestration
+      if (result && result.success && onPaymentSuccess) {
+        const paymentData = {
+          ...values,
+          paymentMode: selectedPaymentMode
+        };
+        console.log('PaymentForm calling onPaymentSuccess with:', paymentData);
+        const updatedFormData = onPaymentSuccess(paymentData);
+        
+        // After adding payment data, submit complete sale to show backend object
+        if (onSubmitCompleteSale) {
+          console.log('PaymentForm calling onSubmitCompleteSale to show backend data');
+          
+          // Pass the updated form data directly to avoid state timing issues
+          const submitResult = await onSubmitCompleteSale(updatedFormData);
+          
+          // Only close modal and show success if database submission was successful
+          if (submitResult && submitResult.success) {
+            console.log('✅ Database submission successful - closing modal and showing success page');
+            onClose(true); // Close modal with success flag
+          } else {
+            console.log('❌ Database submission failed - keeping modal open');
+            // Modal stays open, error will be shown
+          }
+        }
+      }
   };
 
   const handlePaymentModeSelect = (mode) => {

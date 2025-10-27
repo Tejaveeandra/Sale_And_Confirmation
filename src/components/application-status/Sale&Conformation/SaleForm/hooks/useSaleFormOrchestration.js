@@ -10,60 +10,97 @@ export const useSaleFormOrchestration = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
-    personalInfo: null,
-    orientationInfo: null,
-    addressInfo: null,
-    paymentInfo: null
+    // Personal Information Fields
+    firstName: "",
+    surname: "",
+    gender: "",
+    aaparNo: "",
+    dateOfBirth: "",
+    aadharCardNo: "",
+    proReceiptNo: "",
+    admissionReferredBy: "",
+    quota: "",
+    admissionType: "",
+    fatherName: "",
+    phoneNumber: "",
+    profilePhoto: null,
+    
+    // Orientation Information Fields
+    academicYear: "",
+    branch: "",
+    branchType: "",
+    city: "",
+    studentType: "",
+    joiningClass: "",
+    orientationName: "",
+    
+    // Address Information Fields
+    doorNo: "",
+    streetName: "",
+    landmark: "",
+    area: "",
+    pincode: "",
+    state: "",
+    district: "",
+    mandal: "",
+    city: "",
+    gpin: "",
+    
+    // Payment Information Fields
+    paymentDate: "",
+    amount: "",
+    receiptNumber: "",
+    remarks: "",
+    paymentMode: "Cash"
   });
 
   // Transform all form data into backend API format
   const collectAllFormData = useCallback(() => {
-    // Transform data into backend API format
+    // Transform data into backend API format - now using single object
     const transformedData = {
       // Personal Information
-      firstName: formData.personalInfo?.firstName || "",
-      lastName: formData.personalInfo?.surname || "",
-      genderId: formData.personalInfo?.gender || 0,
-      apaarNo: formData.personalInfo?.aaparNo || "",
-      dob: formData.personalInfo?.dateOfBirth || new Date().toISOString(),
-      aadharCardNo: formData.personalInfo?.aadharCardNo || 0,
-      quotaId: formData.personalInfo?.quota || 0,
-      proReceiptNo: formData.personalInfo?.proReceiptNo || 0,
-      admissionReferedBy: formData.personalInfo?.admissionReferredBy || "",
+      firstName: formData.firstName || "",
+      lastName: formData.surname || "",
+      genderId: formData.genderId || 0,
+      apaarNo: formData.aaparNo || "",
+      dob: formData.dateOfBirth || new Date().toISOString(),
+      aadharCardNo: formData.aadharCardNo || 0,
+      quotaId: formData.quotaId || 0,
+      proReceiptNo: formData.proReceiptNo || 0,
+      admissionReferedBy: formData.admissionReferredBy || "",
       appSaleDate: new Date().toISOString(),
-      fatherName: formData.personalInfo?.fatherName || "",
-      fatherMobileNo: formData.personalInfo?.phoneNumber || 0,
+      fatherName: formData.fatherName || "",
+      fatherMobileNo: formData.phoneNumber || 0,
       
       // Orientation Information
-      academicYearId: formData.orientationInfo?.academicYearId || 0,
-      branchId: formData.orientationInfo?.branchId || 0,
-      studentTypeId: formData.orientationInfo?.studentType || 0,
-      classId: formData.orientationInfo?.joiningClass || 0,
-      orientationId: formData.orientationInfo?.orientationName || 0,
-      appTypeId: formData.personalInfo?.admissionType || 0,
+      academicYearId: formData.academicYearId || 0,
+      branchId: formData.branchId || 0,
+      studentTypeId: formData.studentTypeId || 0,
+      classId: formData.joiningClassId || 0,
+      orientationId: formData.orientationId || 0,
+      appTypeId: formData.admissionTypeId || 0,
       
       // Auto-populated Orientation Fields (using IDs for backend)
-      branchId: formData.orientationInfo?.branchId || 0,
-      branchTypeId: formData.orientationInfo?.branchTypeId || 0,
-      cityId: formData.orientationInfo?.cityId || 0,
-      academicYear: formData.orientationInfo?.academicYear || "",
+      branchTypeId: formData.branchTypeId || 0,
+      cityId: formData.cityId || 0,
+      academicYear: formData.academicYear || "",
       
       // Keep labels for reference (optional)
-      branch: formData.orientationInfo?.branch || "",
-      branchType: formData.orientationInfo?.branchType || "",
-      branchCity: formData.orientationInfo?.city || "",
+      branch: formData.branch || "",
+      branchType: formData.branchType || "",
+      branchCity: formData.city || "",
       
       // Address Information (nested object)
       addressDetails: {
-        doorNo: formData.addressInfo?.doorNo || "",
-        street: formData.addressInfo?.streetName || "",
-        landmark: formData.addressInfo?.landmark || "",
-        area: formData.addressInfo?.area || "",
-        cityId: formData.addressInfo?.cityId || 0,
-        mandalId: formData.addressInfo?.mandalId || 0,
-        districtId: formData.addressInfo?.districtId || 0,
-        pincode: formData.addressInfo?.pincode || 0,
-        stateId: formData.addressInfo?.stateId || 0,
+        doorNo: formData.doorNo || "",
+        street: formData.streetName || "",
+        landmark: formData.landmark || "",
+        area: formData.area || "",
+        cityId: formData.cityId || 0,
+        mandalId: formData.mandalId || 0,
+        districtId: formData.districtId || 0,
+        pincode: formData.pincode || 0,
+        stateId: formData.stateId || 0,
         createdBy: 0 // You may need to get this from user context
       },
       
@@ -74,11 +111,19 @@ export const useSaleFormOrchestration = () => {
       
       // Payment Information (nested object)
       paymentDetails: {
-        paymentModeId: formData.paymentInfo?.paymentMode || 0,
-        paymentDate: new Date().toISOString(),
-        amount: formData.paymentInfo?.amount || 0,
-        prePrintedReceiptNo: formData.paymentInfo?.prePrintedReceiptNo || "",
-        remarks: formData.paymentInfo?.remarks || "",
+        paymentModeId: formData.paymentModeId || 0,
+        paymentDate: formData.paymentDate || new Date().toISOString(),
+        amount: formData.amount || 0,
+        prePrintedReceiptNo: formData.receiptNumber || "",
+        remarks: formData.remarks || "",
+        // DD Payment Details
+        mainDdOrganisationId: formData.mainDdOrganisationId || 0,
+        mainDdBankId: formData.mainDdBankId || 0,
+        mainDdBranchId: formData.mainDdBranchId || 0,
+        // Cheque Payment Details
+        mainChequeOrganisationId: formData.mainChequeOrganisationId || 0,
+        mainChequeBankId: formData.mainChequeBankId || 0,
+        mainChequeBranchId: formData.mainChequeBranchId || 0,
         createdBy: 0 // You may need to get this from user context
       }
     };
@@ -88,32 +133,22 @@ export const useSaleFormOrchestration = () => {
 
   // Validate all forms
   const validateAllForms = useCallback(() => {
-    const allData = collectAllFormData();
-    
-    // Check if all required form sections have data
-    const requiredSections = ['personalInfo', 'orientationInfo', 'addressInfo', 'paymentInfo'];
-    const missingSections = requiredSections.filter(section => !formData[section]);
-    
-    if (missingSections.length > 0) {
-      throw new Error(`Missing required form sections: ${missingSections.join(', ')}`);
-    }
-    
-    // Validate required fields in flattened data
+    // Validate required fields in single object
     const requiredFields = [
-      'firstName', 'lastName', 'email', // Personal Info
-      'academicYear', 'joiningClass', 'branch', // Orientation Info  
-      'doorNo', 'streetName', 'city', 'pincode', // Address Info
-      'amount', 'paymentMode' // Payment Info
+      'firstName', 'surname', 'gender', 'aaparNo', 'dateOfBirth', 'aadharCardNo', 'proReceiptNo', 'fatherName', 'phoneNumber', // Personal Info
+      'academicYear', 'branch', 'studentType', 'joiningClass', 'orientationName', // Orientation Info  
+      'doorNo', 'streetName', 'area', 'pincode', 'state', 'district', 'city', // Address Info
+      'amount', 'paymentDate', 'receiptNumber' // Payment Info
     ];
     
-    const missingFields = requiredFields.filter(field => !allData[field]);
+    const missingFields = requiredFields.filter(field => !formData[field]);
     
     if (missingFields.length > 0) {
       throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
     }
     
     return true;
-  }, [collectAllFormData, formData]);
+  }, [formData]);
 
   // Submit complete sale form
   const submitCompleteSale = useCallback(async () => {
@@ -122,14 +157,20 @@ export const useSaleFormOrchestration = () => {
     setSuccess(false);
 
     try {
-      // Validate all forms first
-      validateAllForms();
-      
       // Collect all form data
       const allFormData = collectAllFormData();
       
-      // Call unified API service
-      const response = await saleApi.submitCompleteSale(allFormData);
+      // Display complete form data in console (without API integration)
+      console.log('🚀 === COMPLETE FORM DATA OBJECT === 🚀');
+      console.log('📊 Raw Form Data (Single Object):', formData);
+      console.log('🔄 Transformed Data for Backend:', allFormData);
+      console.log('📋 Form Data Keys:', Object.keys(formData));
+      console.log('📋 Form Data Values:', Object.values(formData));
+      console.log('🎯 === END COMPLETE FORM DATA OBJECT === 🎯');
+      
+      // For now, just simulate success without API call
+      // TODO: Uncomment when API is ready
+      // const response = await saleApi.submitCompleteSale(allFormData);
       
       setSuccess(true);
       
@@ -141,28 +182,83 @@ export const useSaleFormOrchestration = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [validateAllForms, collectAllFormData]);
+  }, [collectAllFormData, formData]);
 
-  // Update form data for a specific section
+  // Update form data - now merges directly into single object
   const updateFormData = useCallback((section, data) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: data
-    }));
+    console.log('🔄 updateFormData called with section:', section, 'data:', data);
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        ...data  // Merge all fields directly into the single object
+      };
+      console.log('🔄 Form data updated. Previous:', prev);
+      console.log('🔄 Form data updated. New:', newData);
+      return newData;
+    });
   }, []);
 
   // Reset all form data
   const resetAllFormData = useCallback(() => {
     setFormData({
-      personalInfo: null,
-      orientationInfo: null,
-      addressInfo: null,
-      paymentInfo: null
+      // Personal Information Fields
+      firstName: "",
+      surname: "",
+      gender: "",
+      aaparNo: "",
+      dateOfBirth: "",
+      aadharCardNo: "",
+      proReceiptNo: "",
+      admissionReferredBy: "",
+      quota: "",
+      admissionType: "",
+      fatherName: "",
+      phoneNumber: "",
+      profilePhoto: null,
+      
+      // Orientation Information Fields
+      academicYear: "",
+      branch: "",
+      branchType: "",
+      city: "",
+      studentType: "",
+      joiningClass: "",
+      orientationName: "",
+      
+      // Address Information Fields
+      doorNo: "",
+      streetName: "",
+      landmark: "",
+      area: "",
+      pincode: "",
+      state: "",
+      district: "",
+      mandal: "",
+      city: "",
+      gpin: "",
+      
+      // Payment Information Fields
+      paymentDate: "",
+      amount: "",
+      receiptNumber: "",
+      remarks: "",
+      paymentMode: "Cash"
     });
     setError(null);
     setSuccess(false);
     setIsSubmitting(false);
   }, []);
+
+  // Collect current form data (for debugging/inspection)
+  const collectCurrentData = useCallback(() => {
+    console.log('🔍 === CURRENT FORM DATA === 🔍');
+    console.log('📊 Raw Form Data (Single Object):', formData);
+    console.log('🔄 Transformed Data:', collectAllFormData());
+    console.log('📋 Form Data Keys:', Object.keys(formData));
+    console.log('📋 Form Data Values:', Object.values(formData));
+    console.log('🎯 === END CURRENT FORM DATA === 🎯');
+    return formData;
+  }, [formData, collectAllFormData]);
 
   return {
     isSubmitting,
@@ -173,6 +269,7 @@ export const useSaleFormOrchestration = () => {
     updateFormData,
     resetAllFormData,
     collectAllFormData,
-    validateAllForms
+    validateAllForms,
+    collectCurrentData
   };
 };

@@ -4,7 +4,7 @@ import ProgressHeader from '../../../../../widgets/ProgressHeader/ProgressHeader
 import CloseIcon from '../../../../../assets/application-status/closeIcon.svg';
 import styles from './PaymentModal.module.css';
 
-const PaymentModal = ({ isOpen, onClose, onPaymentSuccess, totalSteps = 2, isConfirmationMode = false }) => {
+const PaymentModal = ({ isOpen, onClose, onPaymentSuccess, totalSteps = 2, isConfirmationMode = false, onSubmitCompleteSale }) => {
   // For confirmation mode (3 steps), show all steps filled (currentStep = 2)
   // For sale mode (2 steps), show 2 steps filled (currentStep = 1)
   const [currentStep, setCurrentStep] = useState(isConfirmationMode ? 2 : 1);
@@ -39,6 +39,7 @@ const PaymentModal = ({ isOpen, onClose, onPaymentSuccess, totalSteps = 2, isCon
               onClose={onClose} 
               onPaymentSuccess={onPaymentSuccess} 
               isConfirmationMode={isConfirmationMode}
+              onSubmitCompleteSale={onSubmitCompleteSale}
             />
           </div>
         </div>

@@ -15,10 +15,14 @@ const ActionButtons = ({ onPaymentSuccess, onSaleAndConform, onSubmitCompleteSal
 
   const handleSaleAndConform = async () => {
     console.log('Sale & Conform clicked');
+    console.log('Current form data before submission:', formData);
     
-    // Check if all form data is available
-    if (!formData.personalInfo || !formData.orientationInfo || !formData.addressInfo) {
-      alert('Please complete all form sections before proceeding.');
+    // Check if all required form data is available
+    const requiredFields = ['firstName', 'academicYear', 'doorNo', 'amount'];
+    const missingFields = requiredFields.filter(field => !formData[field]);
+    
+    if (missingFields.length > 0) {
+      alert(`Please complete all form sections before proceeding. Missing: ${missingFields.join(', ')}`);
       return;
     }
     
@@ -35,10 +39,12 @@ const ActionButtons = ({ onPaymentSuccess, onSaleAndConform, onSubmitCompleteSal
 
   const handleCloseModal = (success) => {
     setIsPaymentModalOpen(false);
-    // Only trigger success page if success is true (from "Finish Sale" button)
-    // If success is false (from X button), just close the modal
+    // Only trigger success page if database submission was successful
     if (success && onPaymentSuccess) {
+      console.log('✅ Modal closed with success - showing success page');
       onPaymentSuccess(true);
+    } else {
+      console.log('❌ Modal closed without success - not showing success page');
     }
   };
 
@@ -51,6 +57,21 @@ const ActionButtons = ({ onPaymentSuccess, onSaleAndConform, onSubmitCompleteSal
 
   return (
     <div className={styles.action_buttons_container}>
+      <Button
+        buttonname="Show Data"
+        onClick={() => {
+          console.log('🔍 === MANUAL DATA DISPLAY === 🔍');
+          console.log('📊 Current Single Object:', formData);
+          console.log('📋 Object Keys:', Object.keys(formData));
+          console.log('📋 Object Values:', Object.values(formData));
+          console.log('📊 Object Size:', Object.keys(formData).length, 'fields');
+          console.log('🎯 === END MANUAL DATA DISPLAY === 🎯');
+        }}
+        variant="secondary"
+        width="auto"
+        type="button"
+      />
+      
       <Button
         buttonname="Proceed to Sale"
         righticon={
@@ -78,6 +99,7 @@ const ActionButtons = ({ onPaymentSuccess, onSaleAndConform, onSubmitCompleteSal
         isOpen={isPaymentModalOpen} 
         onClose={handleCloseModal}
         onPaymentSuccess={handlePaymentInfoSuccess}
+        onSubmitCompleteSale={onSubmitCompleteSale}
       />
     </div>
   );

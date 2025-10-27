@@ -1,4 +1,5 @@
 import { Formik, Form } from "formik";
+import { useState } from "react";
 import * as Yup from "yup";
 import { formFields, initialValues } from "./constants/addressConstants";
 import { useAddressSubmission } from "./hooks/useAddressSubmission";
@@ -8,6 +9,30 @@ import styles from "./AddressInformation.module.css";
 
 const AddressInformation = ({ onSuccess }) => {
   const { isSubmitting, error, handleSubmit } = useAddressSubmission();
+
+  // Track previous values to detect changes
+  const [previousValues, setPreviousValues] = useState(initialValues);
+
+  // Function to handle value changes
+  const handleValuesChange = (values) => {
+    // Check if values have actually changed
+    const hasChanged = JSON.stringify(values) !== JSON.stringify(previousValues);
+    if (hasChanged && onSuccess) {
+      console.log('🔄 AddressInformation values changed:', values);
+      console.log('🔄 Key fields:', {
+        doorNo: values.doorNo,
+        streetName: values.streetName,
+        area: values.area,
+        pincode: values.pincode,
+        state: values.state,
+        district: values.district,
+        mandal: values.mandal,
+        city: values.city
+      });
+      onSuccess(values);
+      setPreviousValues(values);
+    }
+  };
 
   // Validation schema
   const validationSchema = Yup.object({
@@ -26,9 +51,22 @@ const AddressInformation = ({ onSuccess }) => {
 
   // Handle form submission with API integration
   const onSubmit = async (values, { setSubmitting }) => {
-    const result = await handleSubmit(values, onSuccess);
-    setSubmitting(false);
-    return result;
+    console.log('🔄 AddressInformation onSubmit called with values:', values);
+    
+    try {
+      // Just validate and pass data to parent (matching existing pattern)
+      console.log('🔄 AddressInformation calling onSuccess with:', values);
+      if (onSuccess) {
+        onSuccess(values);
+      }
+      
+      setSubmitting(false);
+      return { success: true };
+    } catch (err) {
+      console.error('Address information validation error:', err);
+      setSubmitting(false);
+      return { success: false, error: err.message };
+    }
   };
 
   return (
@@ -37,7 +75,11 @@ const AddressInformation = ({ onSuccess }) => {
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {({ values, errors, touched, handleChange, handleBlur, setFieldValue }) => (
+      {({ values, errors, touched, handleChange, handleBlur, setFieldValue }) => {
+        // Pass data to parent whenever values change
+        handleValuesChange(values);
+
+        return (
         <Form>
           {/* Global Error Display */}
           {error && (
@@ -60,7 +102,8 @@ const AddressInformation = ({ onSuccess }) => {
             setFieldValue={setFieldValue}
           />
         </Form>
-      )}
+        );
+      }}
     </Formik>
   );
 };

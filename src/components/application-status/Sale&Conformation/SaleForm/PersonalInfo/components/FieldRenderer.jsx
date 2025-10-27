@@ -1,10 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback, memo } from 'react';
 import { Field } from 'formik';
 import Inputbox from '../../../../../../widgets/Inputbox/InputBox';
 import Dropdown from '../../../../../../widgets/Dropdown/Dropdown';
 import FormError from './FormError';
 import { ReactComponent as PhoneIcon } from '../../../../../../assets/application-status/PhoneIcon.svg';
 import { capitalizeWords } from '../../../../../../utils/textUtils';
+
+// Debug flag for conditional logging
+const DEBUG = process.env.NODE_ENV === 'development';
 
 const FieldRenderer = ({ 
   fields, 
@@ -21,7 +24,7 @@ const FieldRenderer = ({
   errorClassName,
   setFieldValue
 }) => {
-  const getOptions = (optionsKey) => {
+  const getOptions = useCallback((optionsKey) => {
     const options = (() => {
       switch (optionsKey) {
         case "admissionReferredByOptions":
@@ -41,12 +44,11 @@ const FieldRenderer = ({
       }
     })();
     
-    
     return options;
-  };
+  }, [admissionReferredByOptions, quotaOptions, admissionTypeOptions, genderOptions, authorizedByOptions]);
 
-  // Custom onChange handler for name fields with capitalization
-  const handleNameFieldChange = (e) => {
+  // Custom onChange handler for name fields with capitalization - optimized with useCallback
+  const handleNameFieldChange = useCallback((e) => {
     const { name, value } = e.target;
     const capitalizedValue = capitalizeWords(value);
     
@@ -57,7 +59,7 @@ const FieldRenderer = ({
       // Fallback to regular handleChange
       handleChange(e);
     }
-  };
+  }, [setFieldValue, handleChange]);
 
   const renderedFields = useMemo(() => {
     return fields.map((field) => {

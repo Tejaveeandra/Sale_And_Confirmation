@@ -1,4 +1,5 @@
 import { Formik, Form, Field } from "formik";
+import { useEffect, useState } from "react";
 import Inputbox from "../../../../../widgets/Inputbox/InputBox";
 import { formFields, initialValues } from "./constants/formFields";
 import { validationSchema } from "./constants/validationSchema";
@@ -23,6 +24,26 @@ const PersonalInformation = ({ onSuccess }) => {
     error: dropdownError 
   } = useDropdownData();
 
+  // Track previous values to detect changes
+  const [previousValues, setPreviousValues] = useState(initialValues);
+
+  // Function to handle value changes
+  const handleValuesChange = (values) => {
+    // Check if values have actually changed
+    const hasChanged = JSON.stringify(values) !== JSON.stringify(previousValues);
+    if (hasChanged && onSuccess) {
+      console.log('🔄 PersonalInformation values changed:', values);
+      console.log('🔄 Key fields:', {
+        gender: values.gender,
+        quota: values.quota,
+        admissionType: values.admissionType,
+        admissionReferredBy: values.admissionReferredBy
+      });
+      onSuccess(values);
+      setPreviousValues(values);
+    }
+  };
+
   console.log('=== PERSONAL INFORMATION RECEIVED DATA ===');
   console.log('Received quotaOptions:', quotaOptions.length, 'items');
   console.log('Received admissionReferredByOptions:', admissionReferredByOptions.length, 'items');
@@ -34,9 +55,22 @@ const PersonalInformation = ({ onSuccess }) => {
 
   // Handle form submission with API integration
   const onSubmit = async (values, { setSubmitting }) => {
-    const result = await handleSubmit(values, onSuccess);
-    setSubmitting(false);
-    return result;
+    console.log('🔄 PersonalInformation onSubmit called with values:', values);
+    
+    try {
+      // Just validate and pass data to parent (matching existing pattern)
+      console.log('🔄 PersonalInformation calling onSuccess with:', values);
+      if (onSuccess) {
+        onSuccess(values);
+      }
+      
+      setSubmitting(false);
+      return { success: true };
+    } catch (err) {
+      console.error('Personal information validation error:', err);
+      setSubmitting(false);
+      return { success: false, error: err.message };
+    }
   };
 
   // Show error state if dropdown data fails to load (but still render the form)
@@ -50,7 +84,11 @@ const PersonalInformation = ({ onSuccess }) => {
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {({ values, errors, touched, setFieldValue, setFieldTouched, handleChange, handleBlur }) => (
+      {({ values, errors, touched, setFieldValue, setFieldTouched, handleChange, handleBlur }) => {
+        // Pass data to parent whenever values change
+        handleValuesChange(values);
+
+        return (
         <Form>
           {/* Global Error Display */}
           {error && (
@@ -137,7 +175,8 @@ const PersonalInformation = ({ onSuccess }) => {
             setFieldValue={setFieldValue}
           />
         </Form>
-      )}
+        );
+      }}
     </Formik>
   );
 };

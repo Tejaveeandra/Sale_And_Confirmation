@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Field } from 'formik';
 import Inputbox from '../../../../../../widgets/Inputbox/InputBox';
 import Dropdown from '../../../../../../widgets/Dropdown/Dropdown';
@@ -8,24 +8,34 @@ import { ReactComponent as SearchIcon } from '../../../../../../assets/applicati
 import { saleApi } from '../../services/saleApi';
 import styles from './AddressFormField.module.css';
 
+// Debug flag for conditional logging
+const DEBUG = process.env.NODE_ENV === 'development';
+
 const AddressFormField = ({ field, values, handleChange, handleBlur, errors, touched, setFieldValue }) => {
-  const [stateOptions, setStateOptions] = useState([]);
-  const [districtOptions, setDistrictOptions] = useState([]);
-  const [mandalOptions, setMandalOptions] = useState([]);
-  const [cityOptions, setCityOptions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [mandalRenderKey, setMandalRenderKey] = useState(0);
-  const [cityRenderKey, setCityRenderKey] = useState(0);
+  // Combined state for better performance
+  const [dropdownState, setDropdownState] = useState({
+    stateOptions: [],
+    districtOptions: [],
+    mandalOptions: [],
+    cityOptions: [],
+    loading: false,
+    mandalRenderKey: 0,
+    cityRenderKey: 0
+  });
+
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'error'
   });
 
+  // Destructure for easier access
+  const { stateOptions, districtOptions, mandalOptions, cityOptions, loading, mandalRenderKey, cityRenderKey } = dropdownState;
+
   // Force re-render when mandal options change
   useEffect(() => {
     if (mandalOptions.length > 0) {
-      setMandalRenderKey(prev => prev + 1);
+      setDropdownState(prev => ({ ...prev, mandalRenderKey: prev.mandalRenderKey + 1 }));
     }
   }, [mandalOptions.length]);
 
@@ -35,45 +45,45 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
       if (values.district && values.districtId) {
         // Trigger both state update and re-render
         fetchMandalsByDistrict(values.districtId);
-        setMandalRenderKey(prev => prev + 1);
+        setDropdownState(prev => ({ ...prev, mandalRenderKey: prev.mandalRenderKey + 1 }));
       } else if (!values.district || !values.districtId) {
         // Clear mandal options when district is cleared
-        setMandalOptions([]);
+        setDropdownState(prev => ({ ...prev, mandalOptions: [] }));
         setFieldValue('mandal', '');
         setFieldValue('mandalId', '');
-        setMandalRenderKey(prev => prev + 1);
+        setDropdownState(prev => ({ ...prev, mandalRenderKey: prev.mandalRenderKey + 1 }));
       }
     } else if (field.name === "city") {
       if (values.district && values.districtId) {
         // Trigger both state update and re-render
         fetchCitiesByDistrict(values.districtId);
-        setCityRenderKey(prev => prev + 1);
+        setDropdownState(prev => ({ ...prev, cityRenderKey: prev.cityRenderKey + 1 }));
       } else if (!values.district || !values.districtId) {
         // Clear city options when district is cleared
-        setCityOptions([]);
+        setDropdownState(prev => ({ ...prev, cityOptions: [] }));
         setFieldValue('city', '');
         setFieldValue('cityId', '');
-        setCityRenderKey(prev => prev + 1);
+        setDropdownState(prev => ({ ...prev, cityRenderKey: prev.cityRenderKey + 1 }));
       }
     }
   }, [values.district, values.districtId, field.name]);
 
-  // Function to show snackbar
-  const showSnackbar = (message, severity = 'error') => {
+  // Function to show snackbar - optimized with useCallback
+  const showSnackbar = useCallback((message, severity = 'error') => {
     setSnackbar({
       open: true,
       message,
       severity
     });
-  };
+  }, []);
 
-  // Function to close snackbar
-  const closeSnackbar = () => {
+  // Function to close snackbar - optimized with useCallback
+  const closeSnackbar = useCallback(() => {
     setSnackbar(prev => ({
       ...prev,
       open: false
     }));
-  };
+  }, []);
 
   // API call to fetch state and district by pincode
   const fetchStateDistrictByPincode = async (pincode) => {
@@ -86,7 +96,7 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
       return;
     }
 
-    setLoading(true);
+    setDropdownState(prev => ({ ...prev, loading: true }));
     try {
       const data = await saleApi.getStateDistrictByPincode(pincode);
       
@@ -98,7 +108,7 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
             value: data.stateId,
             label: data.stateName
           }];
-          setStateOptions(stateOption);
+          setDropdownState(prev => ({ ...prev, stateOptions: stateOption }));
           setFieldValue('state', data.stateName);
           setFieldValue('stateId', data.stateId);
 
@@ -107,12 +117,12 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
             value: data.districtId,
             label: data.districtName
           }];
-          setDistrictOptions(districtOption);
+          setDropdownState(prev => ({ ...prev, districtOptions: districtOption }));
           setFieldValue('district', data.districtName);
           setFieldValue('districtId', data.districtId);
 
           // Clear mandal options and fetch mandals for the district
-          setMandalOptions([]);
+          setDropdownState(prev => ({ ...prev, mandalOptions: [] }));
           setFieldValue('mandal', '');
           setFieldValue('mandalId', '');
           
@@ -125,8 +135,8 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
           // Show polite error if data is incomplete
           showSnackbar('Please enter a valid 6-digit pincode to get location details.', 'warning');
           // Clear state and district
-          setStateOptions([]);
-          setDistrictOptions([]);
+          setDropdownState(prev => ({ ...prev, stateOptions: [] }));
+          setDropdownState(prev => ({ ...prev, districtOptions: [] }));
           setFieldValue('state', '');
           setFieldValue('stateId', '');
           setFieldValue('district', '');
@@ -136,8 +146,8 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
         // Show polite error if no data received
         showSnackbar('Sorry, we couldn\'t find location details for this pincode. Please verify and try again.', 'warning');
         // Clear state and district
-        setStateOptions([]);
-        setDistrictOptions([]);
+        setDropdownState(prev => ({ ...prev, stateOptions: [] }));
+        setDropdownState(prev => ({ ...prev, districtOptions: [] }));
         setFieldValue('state', '');
         setFieldValue('stateId', '');
         setFieldValue('district', '');
@@ -158,14 +168,14 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
       }
       
       // Clear state and district on error
-      setStateOptions([]);
-      setDistrictOptions([]);
+      setDropdownState(prev => ({ ...prev, stateOptions: [] }));
+      setDropdownState(prev => ({ ...prev, districtOptions: [] }));
       setFieldValue('state', '');
       setFieldValue('stateId', '');
       setFieldValue('district', '');
       setFieldValue('districtId', '');
     } finally {
-      setLoading(false);
+      setDropdownState(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -180,7 +190,7 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
       return;
     }
 
-    setLoading(true);
+    setDropdownState(prev => ({ ...prev, loading: true }));
     try {
       const data = await saleApi.getMandalsByDistrict(districtId);
 
@@ -201,9 +211,9 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
           value: item.id, // Use the actual ID from API response
           label: item.name // Use the actual name from API response
         }));
-        setMandalOptions(transformedOptions);
+        setDropdownState(prev => ({ ...prev, mandalOptions: transformedOptions }));
       } else {
-        setMandalOptions([]);
+        setDropdownState(prev => ({ ...prev, mandalOptions: [] }));
         setFieldValue('mandal', '');
         setFieldValue('mandalId', '');
       }
@@ -221,11 +231,11 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
         showSnackbar('Unable to fetch mandals at the moment. Please try again later.', 'error');
       }
       
-      setMandalOptions([]);
+      setDropdownState(prev => ({ ...prev, mandalOptions: [] }));
       setFieldValue('mandal', '');
       setFieldValue('mandalId', '');
     } finally {
-      setLoading(false);
+      setDropdownState(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -240,7 +250,7 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
       return;
     }
 
-    setLoading(true);
+    setDropdownState(prev => ({ ...prev, loading: true }));
     try {
       const data = await saleApi.getCitiesByDistrict(districtId);
 
@@ -261,9 +271,9 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
           value: item.id, // Use the actual ID from API response
           label: item.name // Use the actual name from API response
         }));
-        setCityOptions(transformedOptions);
+        setDropdownState(prev => ({ ...prev, cityOptions: transformedOptions }));
       } else {
-        setCityOptions([]);
+        setDropdownState(prev => ({ ...prev, cityOptions: [] }));
         setFieldValue('city', '');
         setFieldValue('cityId', '');
       }
@@ -281,11 +291,11 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
         showSnackbar('Unable to fetch cities at the moment. Please try again later.', 'error');
       }
       
-      setCityOptions([]);
+      setDropdownState(prev => ({ ...prev, cityOptions: [] }));
       setFieldValue('city', '');
       setFieldValue('cityId', '');
     } finally {
-      setLoading(false);
+      setDropdownState(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -304,8 +314,8 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
       fetchStateDistrictByPincode(pincode);
     } else if (pincode.length < 6) {
       // Clear state and district if pincode is incomplete
-      setStateOptions([]);
-      setDistrictOptions([]);
+      setDropdownState(prev => ({ ...prev, stateOptions: [] }));
+      setDropdownState(prev => ({ ...prev, districtOptions: [] }));
       setFieldValue('state', '');
       setFieldValue('stateId', '');
       setFieldValue('district', '');
@@ -321,8 +331,10 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
       const selectedOption = mandalOptions.find(option => option.label === e.target.value);
       if (selectedOption) {
         setFieldValue('mandalId', selectedOption.value);
-        console.log('Mandal ID stored for backend:', selectedOption.value);
-        console.log('Mandal name:', selectedOption.label);
+        if (DEBUG) {
+          console.log('Mandal ID stored for backend:', selectedOption.value);
+          console.log('Mandal name:', selectedOption.label);
+        }
       } else {
         setFieldValue('mandalId', '');
       }
@@ -337,23 +349,27 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
       const selectedOption = cityOptions.find(option => option.label === e.target.value);
       if (selectedOption) {
         setFieldValue('cityId', selectedOption.value);
-        console.log('City ID stored for backend:', selectedOption.value);
-        console.log('City name:', selectedOption.label);
+        if (DEBUG) {
+          console.log('City ID stored for backend:', selectedOption.value);
+          console.log('City name:', selectedOption.label);
+        }
       } else {
         setFieldValue('cityId', '');
       }
     }
   };
 
-  const getOptions = (optionsKey) => {
-    const optionsMap = {
-      "stateOptions": stateOptions,
-      "districtOptions": districtOptions,
-      "mandalOptions": mandalOptions,
-      "cityOptions": cityOptions
-    };
+  // Optimized options mapping with useMemo
+  const optionsMap = useMemo(() => ({
+    "stateOptions": stateOptions,
+    "districtOptions": districtOptions,
+    "mandalOptions": mandalOptions,
+    "cityOptions": cityOptions
+  }), [stateOptions, districtOptions, mandalOptions, cityOptions]);
+
+  const getOptions = useCallback((optionsKey) => {
     return optionsMap[optionsKey] || [];
-  };
+  }, [optionsMap]);
 
   return (
     <>
@@ -444,4 +460,4 @@ const AddressFormField = ({ field, values, handleChange, handleBlur, errors, tou
   );
 };
 
-export default AddressFormField;
+export default memo(AddressFormField);
