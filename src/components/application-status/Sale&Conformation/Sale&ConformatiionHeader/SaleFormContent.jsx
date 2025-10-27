@@ -84,8 +84,6 @@ const SaleFormContent = ({ status, onBack, initialData = {}, showSuccess = false
             applicationNo={applicationNo || ""}
             campusName={headerCampus}
             zoneName={headerZone}
-            academicYear={locationInitialValues.academicYear || initialData.academicYear || ""}
-            applicationFee={locationInitialValues.applicationFee || initialData.applicationFee || ""}
             category={category}
           />
         </div>

@@ -9,7 +9,7 @@ import PaymentFormFields from './components/PaymentFormFields';
 import PaymentFormActions from './components/PaymentFormActions';
 import styles from './PaymentForm.module.css';
 
-const PaymentForm = ({ onClose, onPaymentSuccess, isConfirmationMode = false, onSubmitCompleteSale }) => {
+const PaymentForm = ({ onClose, onPaymentSuccess, isConfirmationMode = false, onSubmitCompleteSale, onSubmitConfirmation }) => {
   const [selectedPaymentMode, setSelectedPaymentMode] = useState("Cash");
   const { isSubmitting, error, handleSubmit } = usePaymentSubmission();
 
@@ -30,8 +30,23 @@ const PaymentForm = ({ onClose, onPaymentSuccess, isConfirmationMode = false, on
         console.log('PaymentForm calling onPaymentSuccess with:', paymentData);
         const updatedFormData = onPaymentSuccess(paymentData);
         
-        // After adding payment data, submit complete sale to show backend object
-        if (onSubmitCompleteSale) {
+        // After adding payment data, submit based on mode
+        if (isConfirmationMode && onSubmitConfirmation) {
+          console.log('PaymentForm calling onSubmitConfirmation to submit confirmation data');
+          
+          // Submit confirmation data
+          const submitResult = await onSubmitConfirmation();
+          
+          // Only close modal and show success if confirmation API actually succeeded
+          if (submitResult && submitResult.success) {
+            console.log('✅ Confirmation submission successful - closing modal and showing success page');
+            onClose(true); // Close modal, parent will show success page
+          } else {
+            console.log('❌ Confirmation submission failed - keeping modal open');
+            // Modal stays open, error will be shown in the parent component
+            // Don't close the modal on API failure
+          }
+        } else if (!isConfirmationMode && onSubmitCompleteSale) {
           console.log('PaymentForm calling onSubmitCompleteSale to show backend data');
           
           // Pass the updated form data directly to avoid state timing issues

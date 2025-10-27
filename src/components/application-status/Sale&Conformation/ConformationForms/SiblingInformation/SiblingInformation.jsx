@@ -1,13 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Inputbox from "../../../../../widgets/Inputbox/InputBox";
 import Dropdown from "../../../../../widgets/Dropdown/Dropdown";
 import { Button as MuiButton } from "@mui/material";
 import Button from "../../../../../widgets/Button/Button";
 import { ReactComponent as Add } from "../../../../../assets/application-status/si_add-fill.svg";
 import { ReactComponent as UploadIcon } from "../../../../../assets/application-status/Upload.svg";
+import { useRelationTypes, useStudentClasses, useGenders } from "../hooks/useConfirmationData";
 import styles from "./SiblingInformation.module.css";
 
-const SiblingInformation = () => {
+const SiblingInformation = ({ onSuccess }) => {
+  // Fetch relation types, student classes, and genders data using custom hooks
+  const { relationTypes, loading: relationTypesLoading, error: relationTypesError } = useRelationTypes();
+  const { studentClasses, loading: studentClassesLoading, error: studentClassesError } = useStudentClasses();
+  const { genders, loading: gendersLoading, error: gendersError } = useGenders();
+  
   // Field configuration - all labels and options in one place
   const fieldConfig = [
     {
@@ -21,32 +27,20 @@ const SiblingInformation = () => {
       type: 'dropdown',
       name: 'relationType',
       label: 'Relation Type',
-      options: [
-        { id: 'brother', label: 'Brother' },
-        { id: 'sister', label: 'Sister' }
-      ],
+      options: relationTypes, // Now using dynamic data from API
       filterOptions: ['Father', 'Mother', 'Guardian']
     },
     {
       type: 'dropdown',
       name: 'class',
       label: 'Select Class',
-      options: [
-        { id: '1', label: 'Class 1' },
-        { id: '2', label: 'Class 2' },
-        { id: '3', label: 'Class 3' },
-        { id: '4', label: 'Class 4' },
-        { id: '5', label: 'Class 5' }
-      ]
+      options: studentClasses, // Now using dynamic data from API
     },
     {
       type: 'dropdown',
       name: 'gender',
       label: 'Gender',
-      options: [
-        { id: 'male', label: 'Male' },
-        { id: 'female', label: 'Female' }
-      ]
+      options: genders, // Now using dynamic data from API
     },
     {
       type: 'input',
@@ -58,6 +52,13 @@ const SiblingInformation = () => {
   const [showSiblings, setShowSiblings] = useState(false);
   const [siblings, setSiblings] = useState([]);
   const [annexure, setAnnexure] = useState([]);
+
+  // Update parent when siblings data changes (prevent infinite loop)
+  useEffect(() => {
+    if (onSuccess && siblings.length >= 0) {
+      onSuccess(siblings);
+    }
+  }, [siblings]);
 
   const handleAddSibling = () => {
     setSiblings(prev => [...prev, {
@@ -118,6 +119,8 @@ const SiblingInformation = () => {
 
   return (
     <div className={styles.Sibling_Info_Section_general_form_row}>
+    
+      
       <div className={`${styles.Sibling_Info_Section_general_sibling_container} ${styles.Sibling_Info_Section_general_full_width}`}>
         {showSiblings && (
           <div className={styles.siblingContainer}>
@@ -177,8 +180,13 @@ const SiblingInformation = () => {
                               const selectedOption = field.options.find(opt => opt.label === selectedLabel);
                               handleFieldChange(i, field.name, selectedOption ? selectedOption.id : "");
                             }}
-                            disabled={false}
-                            loading={false}
+                            disabled={relationTypesLoading || studentClassesLoading || gendersLoading}
+                            loading={relationTypesLoading || studentClassesLoading || gendersLoading}
+                            placeholder={
+                              (relationTypesLoading || studentClassesLoading || gendersLoading) 
+                                ? "Loading..." 
+                                : "Select " + field.label
+                            }
                           />
                         );
                       }

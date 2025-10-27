@@ -17,17 +17,13 @@ export const usePaymentSubmission = () => {
     try {
       console.log('Payment form submitted:', values);
       
-      // Just validate and pass data to parent
-      // No API call - handled by unified orchestration
+      // Just validate payment data - no API call here
+      // The actual API call (confirmation) is handled by parent component
       
-      setSuccess(true);
+      // Don't set success here - let the parent component handle it
+      // based on the actual confirmation API result
       
-      // Call onClose with success
-      if (onClose) {
-        onClose(true);
-      }
-      
-      return { success: true };
+      return { success: true, paymentData: values };
     } catch (err) {
       console.error('Payment submission error:', err);
       setError(err.message || 'Payment submission failed. Please try again.');

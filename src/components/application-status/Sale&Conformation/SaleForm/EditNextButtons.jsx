@@ -5,7 +5,7 @@ import {ReactComponent as EditIcon} from '../../../../assets/application-status/
 import PaymentModal from './Paymentinfo/PaymentModal';
 import styles from './EditNextButtons.module.css';
 
-const EditNextButtons = ({ onEdit, onNext, showSingleButton, singleButtonText, onSingleButtonClick, isConfirmationMode = false }) => {
+const EditNextButtons = ({ onEdit, onNext, showSingleButton, singleButtonText, onSingleButtonClick, isConfirmationMode = false, onSubmitConfirmation, isSubmitting = false }) => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const handleEdit = () => {
@@ -22,9 +22,18 @@ const EditNextButtons = ({ onEdit, onNext, showSingleButton, singleButtonText, o
     }
   };
 
-  const handleSingleButton = () => {
-    console.log('Single button clicked - opening payment modal');
-    setIsPaymentModalOpen(true);
+  const handleSingleButton = async () => {
+    console.log('Single button clicked');
+    
+    if (isConfirmationMode) {
+      // In confirmation mode, open payment modal
+      console.log('Opening payment modal for confirmation');
+      setIsPaymentModalOpen(true);
+    } else {
+      // In normal mode, open payment modal
+      console.log('Opening payment modal');
+      setIsPaymentModalOpen(true);
+    }
   };
 
   const handleCloseModal = (success) => {
@@ -48,12 +57,13 @@ const EditNextButtons = ({ onEdit, onNext, showSingleButton, singleButtonText, o
       <>
         <div className={styles.edit_next_buttons_container}>
           <Button
-            buttonname={singleButtonText || "Proceed to payment"}
+            buttonname={isConfirmationMode ? "Proceed to Payment" : (singleButtonText || "Proceed to payment")}
             righticon={<TrendingUpIcon />}
             onClick={handleSingleButton}
             variant="primary"
             width="auto"
             type="button"
+            disabled={isSubmitting}
           />
         </div>
         
@@ -63,6 +73,7 @@ const EditNextButtons = ({ onEdit, onNext, showSingleButton, singleButtonText, o
           onPaymentSuccess={handlePaymentSuccess}
           totalSteps={isConfirmationMode ? 3 : 2}
           isConfirmationMode={isConfirmationMode}
+          onSubmitConfirmation={onSubmitConfirmation}
         />
       </>
     );

@@ -1,23 +1,138 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Inputbox from '../../../../../widgets/Inputbox/InputBox';
 import Dropdown from '../../../../../widgets/Dropdown/Dropdown';
+import { useOrientations, useBatches, useOrientationBatchComboDetails, useStates, useDistricts, useSchoolTypes, useFoodTypes, useBloodGroupTypes, useCastes, useReligions } from '../hooks/useConfirmationData';
 import styles from './AcademicInformation.module.css';
 
-const AcademicInformation = () => {
+const AcademicInformation = ({ profileData, onSuccess }) => {
   const [formData, setFormData] = useState({
     orientationBatch: '',
+    orientationBatchId: '', // Add batch ID field for backend
     schoolState: '',
+    schoolStateId: '', // Add state ID field for backend
+    schoolDistrict: '',
+    schoolDistrictId: '', // Add district ID field for backend
     schoolName: '',
     marks: '',
-    orientationDates: '',
-    schoolDistrict: '',
+    orientationStartDates: '', // Updated field name
+    orientationEndDates: '', // Updated field name
     additionalOrientationFee: '',
     foodType: '',
+    foodTypeId: '', // Add food type ID field for backend
     orientationFee: '0.0',
-    schoolType: 'SSC',
+    schoolType: '',
+    schoolTypeId: '', // Add school type ID field for backend
     scoreAppNo: '',
-    bloodGroup: ''
+    bloodGroup: '',
+    bloodGroupId: '', // Add blood group ID field for backend
+    caste: '',
+    casteId: '', // Add caste ID field for backend
+    religion: '',
+    religionId: '', // Add religion ID field for backend
+    orientationName: '', // Add orientation name field
+    orientationNameId: '' // Add orientation ID field for backend
   });
+
+  // Extract campusId and classId from profile data
+  const campusId = profileData?.branchId || null;
+  const classId = profileData?.joiningClassId || null;
+
+  // Fetch orientations data using the hook
+  const { orientations, loading: orientationsLoading, error: orientationsError } = useOrientations(campusId, classId);
+
+  // Fetch batches data using the hook (triggered by selected orientation)
+  const { batches, loading: batchesLoading, error: batchesError } = useBatches(formData.orientationNameId);
+
+  // Fetch combo details data using the hook (triggered by both orientation and batch)
+  const { comboDetails, loading: comboDetailsLoading, error: comboDetailsError } = useOrientationBatchComboDetails(formData.orientationNameId, formData.orientationBatchId);
+
+  // Fetch states data using the hook
+  const { states, loading: statesLoading, error: statesError } = useStates();
+
+  // Fetch districts data using the hook (triggered by selected state)
+  const { districts, loading: districtsLoading, error: districtsError } = useDistricts(formData.schoolStateId);
+
+  // Fetch school types data using the hook
+  const { schoolTypes, loading: schoolTypesLoading, error: schoolTypesError } = useSchoolTypes();
+
+  // Fetch food types data using the hook
+  const { foodTypes, loading: foodTypesLoading, error: foodTypesError } = useFoodTypes();
+
+  // Fetch blood group types data using the hook
+  const { bloodGroupTypes, loading: bloodGroupTypesLoading, error: bloodGroupTypesError } = useBloodGroupTypes();
+
+  // Fetch castes data using the hook
+  const { castes, loading: castesLoading, error: castesError } = useCastes();
+
+  // Fetch religions data using the hook
+  const { religions, loading: religionsLoading, error: religionsError } = useReligions();
+
+  // Helper function to format ISO date to YYYY-MM-DD format for date inputs
+  const formatDateForInput = (isoDateString) => {
+    if (!isoDateString) return '';
+    
+    try {
+      // Handle the year formatting issue (0027 -> 2027)
+      let correctedDateString = isoDateString;
+      if (isoDateString.includes('0027')) {
+        correctedDateString = isoDateString.replace('0027', '2027');
+      }
+      
+      // Parse the ISO date string and convert to YYYY-MM-DD format
+      const date = new Date(correctedDateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return '';
+      }
+      
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      
+      const formattedDate = `${year}-${month}-${day}`;
+      
+      return formattedDate;
+    } catch (error) {
+      return '';
+    }
+  };
+
+  // Auto-populate fields when combo details are loaded
+  React.useEffect(() => {
+    if (comboDetails) {
+      // Extract dates from various possible field names (prioritize the correct field names from backend)
+      const startDate = comboDetails.orientationStartDate || comboDetails.startDate || comboDetails.start_date || comboDetails.orientationStartDates || '';
+      const endDate = comboDetails.orientationEndDate || comboDetails.endDate || comboDetails.end_date || comboDetails.orientationEndDates || '';
+      
+      // Format dates for date input fields
+      const formattedStartDate = formatDateForInput(startDate);
+      const formattedEndDate = formatDateForInput(endDate);
+      
+      setFormData(prev => ({
+        ...prev,
+        orientationStartDates: formattedStartDate,
+        orientationEndDates: formattedEndDate,
+        orientationFee: comboDetails.fee || comboDetails.orientationFee || comboDetails.orientation_fee || '0.0'
+      }));
+    }
+  }, [comboDetails]);
+
+
+  // Test function to manually test the food types API
+  const testFoodTypesAPI = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/application-confirmation/dropdown/foodtypes');
+      const data = await response.json();
+    } catch (error) {
+      console.error('🧪 Manual API Test Error:', error);
+    }
+  };
+
+  // Call the test function on component mount
+  React.useEffect(() => {
+    testFoodTypesAPI();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -29,11 +144,127 @@ const AcademicInformation = () => {
 
   const handleDropdownChange = (e) => {
     const { name, value } = e.target;
+    
+    // Handle orientation selection - store both label and ID
+    if (name === 'orientationName') {
+      const selectedOrientation = orientations.find(orientation => orientation.label === value);
+      const orientationId = selectedOrientation ? selectedOrientation.id : "";
+      
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        orientationNameId: orientationId, // Store the ID for backend
+        orientationBatch: '', // Clear batch when orientation changes
+        orientationBatchId: '', // Clear batch ID when orientation changes
+        orientationStartDates: '', // Clear dates when orientation changes
+        orientationEndDates: '', // Clear dates when orientation changes
+        orientationFee: '0.0' // Reset fee when orientation changes
+      }));
+    } else if (name === 'orientationBatch') {
+      // Handle batch selection - store both label and ID
+      const selectedBatch = batches.find(batch => batch.label === value);
+      const batchId = selectedBatch ? selectedBatch.id : "";
+      
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        orientationBatchId: batchId // Store the ID for backend
+      }));
+    } else if (name === 'schoolState') {
+      // Handle state selection - store both label and ID
+      const selectedState = states.find(state => state.label === value);
+      const stateId = selectedState ? selectedState.id : "";
+      
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        schoolStateId: stateId, // Store the ID for backend
+        schoolDistrict: '', // Clear district when state changes
+        schoolDistrictId: '' // Clear district ID when state changes
+      }));
+    } else if (name === 'schoolDistrict') {
+      // Handle district selection - store both label and ID
+      const selectedDistrict = districts.find(district => district.label === value);
+      const districtId = selectedDistrict ? selectedDistrict.id : "";
+      
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        schoolDistrictId: districtId // Store the ID for backend
+      }));
+    } else if (name === 'schoolType') {
+      // Handle school type selection - store both label and ID
+      const selectedSchoolType = schoolTypes.find(schoolType => schoolType.label === value);
+      const schoolTypeId = selectedSchoolType ? selectedSchoolType.id : "";
+      
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        schoolTypeId: schoolTypeId // Store the ID for backend
+      }));
+    } else if (name === 'foodType') {
+      // Handle food type selection - store both label and ID
+      const selectedFoodType = foodTypes.find(foodType => foodType.label === value);
+      const foodTypeId = selectedFoodType ? selectedFoodType.id : "";
+      
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        foodTypeId: foodTypeId // Store the ID for backend
+      }));
+    } else if (name === 'bloodGroup') {
+      // Handle blood group selection - store both label and ID
+      const selectedBloodGroup = bloodGroupTypes.find(bloodGroup => bloodGroup.label === value);
+      const bloodGroupId = selectedBloodGroup ? selectedBloodGroup.id : "";
+      
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        bloodGroupId: bloodGroupId // Store the ID for backend
+      }));
+    } else if (name === 'caste') {
+      // Handle caste selection - store both label and ID
+      const selectedCaste = castes.find(caste => caste.label === value);
+      const casteId = selectedCaste ? selectedCaste.id : "";
+      
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        casteId: casteId // Store the ID for backend
+      }));
+    } else if (name === 'religion') {
+      // Handle religion selection - store both label and ID
+      const selectedReligion = religions.find(religion => religion.label === value);
+      const religionId = selectedReligion ? selectedReligion.id : "";
+      
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        religionId: religionId // Store the ID for backend
+      }));
+    } else {
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    }
   };
+
+  // Update parent when form data changes (prevent infinite loop)
+  useEffect(() => {
+    if (onSuccess && Object.keys(formData).length > 0) {
+      onSuccess(formData);
+    }
+  }, [formData]);
 
   // Define field configurations
   const fields = [
@@ -49,20 +280,31 @@ const AcademicInformation = () => {
       name: 'orientationName',
       label: 'Orientation Name',
       placeholder: 'Select orientation name',
-      options: ['Orientation 1', 'Orientation 2', 'Orientation 3', 'Orientation 4']
+      options: orientations.map(orientation => orientation.label), // Now using dynamic data from API
+      loading: orientationsLoading,
+      error: orientationsError
     },
     {
       type: 'dropdown',
       name: 'orientationBatch',
       label: 'Orientation Batch',
       placeholder: 'Select course batch',
-      options: ['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4']
+      options: batches.map(batch => batch.label), // Now using dynamic data from API
+      loading: batchesLoading,
+      error: batchesError
     },
     {
       type: 'input',
-      name: 'orientationDates',
-      label: 'Orientation Dates',
-      placeholder: 'Orientation date',
+      name: 'orientationStartDates',
+      label: 'Orientation Start Date',
+      placeholder: 'Orientation start date',
+      inputType: 'date'
+    },
+    {
+      type: 'input',
+      name: 'orientationEndDates',
+      label: 'Orientation End Date',
+      placeholder: 'Orientation end date',
       inputType: 'date'
     },
     {
@@ -78,22 +320,27 @@ const AcademicInformation = () => {
       name: 'schoolState',
       label: 'School State',
       placeholder: 'Select state',
-      options: ['Maharashtra', 'Karnataka', 'Tamil Nadu', 'Gujarat', 'Delhi']
+      options: states.map(state => state.label), // Now using dynamic data from API
+      loading: statesLoading,
+      error: statesError
     },
     {
       type: 'dropdown',
       name: 'schoolDistrict',
       label: 'School District',
       placeholder: 'Select district',
-      options: ['Mumbai', 'Pune', 'Nagpur', 'Nashik', 'Aurangabad']
+      options: districts.map(district => district.label), // Now using dynamic data from API
+      loading: districtsLoading,
+      error: districtsError
     },
     {
       type: 'dropdown',
       name: 'schoolType',
       label: 'School Type',
       placeholder: 'Select school type',
-      options: ['SSC', 'CBSE', 'ICSE', 'IB', 'State Board'],
-      value: 'SSC'
+      options: schoolTypes.map(schoolType => schoolType.label), // Now using dynamic data from API
+      loading: schoolTypesLoading,
+      error: schoolTypesError
     },
     {
       type: 'input',
@@ -121,8 +368,10 @@ const AcademicInformation = () => {
       type: 'dropdown',
       name: 'foodType',
       label: 'Food Type',
-      placeholder: 'Select Food Type',
-      options: ['Veg', 'Non-Veg', 'Jain', 'No Preference']
+      placeholder: foodTypesLoading ? 'Loading...' : (foodTypesError ? 'Error loading data' : (foodTypes?.length === 0 ? 'No data available' : 'Select Food Type')),
+      options: foodTypes?.map(foodType => foodType.label) || [], // Now using dynamic data from API with safety check
+      loading: foodTypesLoading,
+      error: foodTypesError
     },
     // Column 3
     
@@ -133,21 +382,27 @@ const AcademicInformation = () => {
       name: 'bloodGroup',
       label: 'Blood Group',
       placeholder: 'Select Blood Group',
-      options: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+      options: bloodGroupTypes?.map(bloodGroup => bloodGroup.label) || [], // Now using dynamic data from API with safety check
+      loading: bloodGroupTypesLoading,
+      error: bloodGroupTypesError
     },
     {
       type: 'dropdown',
       name: 'caste',
       label: 'Caste ',
       placeholder: 'Select Caste',
-      options: ['SC', 'ST', 'OBC', 'General']
+      options: castes?.map(caste => caste.label) || [], // Now using dynamic data from API with safety check
+      loading: castesLoading,
+      error: castesError
     },
     {
       type: 'dropdown',
       name: 'religion',
       label: 'Religion',
       placeholder: 'Select Religion',
-      options: ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Other']
+      options: religions?.map(religion => religion.label) || [], // Now using dynamic data from API with safety check
+      loading: religionsLoading,
+      error: religionsError
     },
   ];
 
@@ -179,6 +434,9 @@ const AcademicInformation = () => {
                 value={formData[field.name] || field.value || ''}
                 onChange={handleDropdownChange}
                 dropdownsearch={true}
+                disabled={field.loading}
+                loading={field.loading}
+                placeholder={field.loading ? "Loading..." : field.placeholder}
               />
             )}
           </div>

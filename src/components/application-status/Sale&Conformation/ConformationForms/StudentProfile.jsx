@@ -1,5 +1,6 @@
 import React, { useState } from 'react'; // Import useState
 import { Formik } from 'formik';
+import { useStudentProfile } from './hooks/useConfirmationData';
 import styles from './StudentProfile.module.css';
 import ProfilePhoto from '../SaleForm/PersonalInfo/components/ProfilePhoto';
  
@@ -11,8 +12,109 @@ const InfoField = ({ label, value }) => (
   </div>
 );
  
-const StudentProfile = () => {
+const StudentProfile = ({ applicationNumber, onProfileDataReceived }) => {
   const [isHovered, setIsHovered] = useState(false); // New state for hover
+  
+  // Fetch student profile data using the hook
+  const { profileData, loading, error } = useStudentProfile(applicationNumber);
+
+  // Call the callback when profile data is loaded
+  React.useEffect(() => {
+    if (profileData && onProfileDataReceived) {
+      console.log('📤 Sending profile data to parent:', profileData);
+      onProfileDataReceived(profileData);
+    }
+  }, [profileData, onProfileDataReceived]);
+
+  // Helper function to safely get values from profile data
+  const getValue = (fieldName, fallback = "-") => {
+    if (!profileData) return fallback;
+    
+    // Handle nested objects
+    if (fieldName === 'fatherName') {
+      return profileData.parentInfo?.fatherName || fallback;
+    }
+    if (fieldName === 'fatherMobileNo') {
+      return profileData.parentInfo?.phoneNumber || fallback;
+    }
+    
+    // Handle address details
+    if (['doorNo', 'street', 'landmark', 'area', 'pincode', 'district', 'mandal', 'city'].includes(fieldName)) {
+      return profileData.addressDetails?.[fieldName] || profileData.addressDetails?.[fieldName + 'Name'] || fallback;
+    }
+    
+    // Handle fields with Name suffix
+    const nameField = fieldName + 'Name';
+    if (profileData[nameField]) {
+      return profileData[nameField];
+    }
+    
+    // Handle specific field mappings
+    const fieldMappings = {
+      'gender': 'genderName',
+      'quota': 'quotaName',
+      'academicYear': 'academicYearValue',
+      'branch': 'branchName',
+      'studentType': 'studentTypeName',
+      'joiningClass': 'joiningClassName',
+      'orientation': 'orientationName',
+      'branchType': 'branchTypeName',
+      'admissionType': 'admissionTypeName',
+      'district': 'addressDetails.districtName',
+      'mandal': 'addressDetails.mandalName',
+      'city': 'addressDetails.cityName'
+    };
+    
+    if (fieldMappings[fieldName]) {
+      const mapping = fieldMappings[fieldName];
+      if (mapping.includes('.')) {
+        const [parent, child] = mapping.split('.');
+        return profileData[parent]?.[child] || fallback;
+      }
+      return profileData[mapping] || fallback;
+    }
+    
+    // Direct field access
+    return profileData[fieldName] || fallback;
+  };
+
+  // Debug logging
+  console.log('🔍 StudentProfile Debug:', {
+    applicationNumber,
+    profileData,
+    loading,
+    error,
+    profileDataKeys: profileData ? Object.keys(profileData) : []
+  });
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className={styles.profileContainer}>
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          <div>Loading student profile...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className={styles.profileContainer}>
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '20px',
+          backgroundColor: '#fee2e2',
+          border: '1px solid #fecaca',
+          borderRadius: '4px',
+          color: '#dc2626'
+        }}>
+          ⚠️ Error loading student profile: {error}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Formik
@@ -36,16 +138,15 @@ const StudentProfile = () => {
     <div className={styles.dividerLine}></div>
   </div>
           <div className={`${styles.grid} ${styles.gridCols4}`}>
-            <InfoField label="PRO Receipt No" value="0" />
-            <InfoField label="First Name" value="First Name" />
-            <InfoField label="Last Name" value="Last Name" />
-            <InfoField label="Gender" value="Male" />
-            <InfoField label="Aapar No" value="9828e77" />
-            <InfoField label="Date of Birth" value="07-12-2004" />
-            <InfoField label="Admission Referred by" value="Venkat Boppana" />
-            <InfoField label="Quota" value="General" />
-            <InfoField label="Aadhar Card No" value="8892 2898 6273" />
-            <InfoField label="PRO Receipt No" value="6274528362yrts729" />
+            <InfoField label="First Name" value={getValue('firstName')} />
+            <InfoField label="Last Name" value={getValue('lastName')} />
+            <InfoField label="Gender" value={getValue('gender')} />
+            <InfoField label="Aapar No" value={getValue('apaarNo')} />
+            <InfoField label="Date of Birth" value={getValue('dob')} />
+            <InfoField label="Admission Referred by" value={getValue('admissionReferedBy')} />
+            <InfoField label="Quota" value={getValue('quota')} />
+            <InfoField label="Aadhar Card No" value={getValue('aadharCardNo')} />
+            <InfoField label="PRO Receipt No" value={getValue('proReceiptNo')} />
           </div>
         </div>
       </div>
@@ -56,8 +157,8 @@ const StudentProfile = () => {
     <div className={styles.dividerLine}></div>
   </div>
   <div className={`${styles.grid} ${styles.gridCols2}`}>
-    <InfoField label="Father Name" value="Anil Londonker" />
-    <InfoField label="Phone Number" value="+91-9876543210" />
+    <InfoField label="Father Name" value={getValue('fatherName')} />
+    <InfoField label="Phone Number" value={getValue('fatherMobileNo')} />
   </div>
 </div>
  
@@ -68,14 +169,14 @@ const StudentProfile = () => {
     <div className={styles.dividerLine}></div>
   </div>
   <div className={`${styles.grid} ${styles.gridCols4}`}>
-    <InfoField label="Academic Year" value="A.Y 2025-2026" />
-    <InfoField label="Branch" value="Jubilee Hills" />
-    <InfoField label="Student Type" value="Day Scholar" />
-    <InfoField label="Joining Class" value="Class 8" />
-    <InfoField label="Orientation Name" value="Icon" />
-    <InfoField label="City" value="Hyderabad" />
-    <InfoField label="Branch Type" value="Jubilee Hills" />
-    <InfoField label="Admission Type" value="Walk-in" />
+    <InfoField label="Academic Year" value={getValue('academicYear')} />
+    <InfoField label="Branch" value={getValue('branch')} />
+    <InfoField label="Student Type" value={getValue('studentType')} />
+    <InfoField label="Joining Class" value={getValue('joiningClass')} />
+    <InfoField label="Orientation Name" value={getValue('orientation')} />
+    <InfoField label="City" value={getValue('city')} />
+    <InfoField label="Branch Type" value={getValue('branchType')} />
+    <InfoField label="Admission Type" value={getValue('admissionType')} />
   </div>
 </div>
  
@@ -86,15 +187,15 @@ const StudentProfile = () => {
     <div className={styles.General_Info_Section_general_line}></div>
   </div>
   <div className={`${styles.grid} ${styles.gridCols4}`}>
-    <InfoField label="Door No" value="12-345/A" />
-    <InfoField label="Street" value="Road No 10" />
-    <InfoField label="Landmark" value="Near Apollo Hospital" />
-    <InfoField label="Area" value="Jubilee Hills" />
-    <InfoField label="Pincode" value="500033" />
-    <InfoField label="District" value="Hyderabad" />
-    <InfoField label="Mandal" value="Shaikpet" />
-    <InfoField label="City" value="Hyderabad" />
-    <InfoField label="G-pin" value="XYZ1234" />
+    <InfoField label="Door No" value={getValue('doorNo')} />
+    <InfoField label="Street" value={getValue('street')} />
+    <InfoField label="Landmark" value={getValue('landmark')} />
+    <InfoField label="Area" value={getValue('area')} />
+    <InfoField label="Pincode" value={getValue('pincode')} />
+    <InfoField label="District" value={getValue('district')} />
+    <InfoField label="Mandal" value={getValue('mandal')} />
+    <InfoField label="City" value={getValue('city')} />
+    <InfoField label="G-pin" value={getValue('gpin')} />
   </div>
   </div>
  

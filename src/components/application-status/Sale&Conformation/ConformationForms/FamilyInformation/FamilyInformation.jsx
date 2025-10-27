@@ -1,13 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Inputbox from "../../../../../widgets/Inputbox/InputBox";
 import Dropdown from "../../../../../widgets/Dropdown/Dropdown";
 import { ReactComponent as EmailIcon } from "../../../../../assets/application-status/EmailIcon.svg";
 import { ReactComponent as PhoneIcon } from "../../../../../assets/application-status/PhoneIcon.svg";
 import { capitalizeWords } from "../../../../../utils/textUtils";
+import { useSectors, useOccupations } from "../hooks/useConfirmationData";
 import styles from "./FamilyInformation.module.css";
 
-const FamilyInformation = ({ formData = {} }) => {
-  console.log('FamilyInformation component rendered with formData:', formData);
+const FamilyInformation = ({ formData = {}, onSuccess }) => {
+  
+  // Fetch sectors and occupations data using custom hooks
+  const { sectors, loading: sectorsLoading, error: sectorsError } = useSectors();
+  const { occupations, loading: occupationsLoading, error: occupationsError } = useOccupations();
   
   // Local state for form data
   const [localFormData, setLocalFormData] = useState({
@@ -15,13 +19,17 @@ const FamilyInformation = ({ formData = {} }) => {
     fatherPhoneNumber: formData.fatherPhoneNumber || "",
     fatherEmail: formData.fatherEmail || "",
     fatherSector: formData.fatherSector || "",
+    fatherSectorId: formData.fatherSectorId || "", // Store sector ID for backend
     fatherOccupation: formData.fatherOccupation || "",
+    fatherOccupationId: formData.fatherOccupationId || "", // Store occupation ID for backend
     fatherOtherOccupation: formData.fatherOtherOccupation || "",
     motherName: formData.motherName || "",
     motherPhoneNumber: formData.motherPhoneNumber || "",
     motherEmail: formData.motherEmail || "",
     motherSector: formData.motherSector || "",
+    motherSectorId: formData.motherSectorId || "", // Store sector ID for backend
     motherOccupation: formData.motherOccupation || "",
+    motherOccupationId: formData.motherOccupationId || "", // Store occupation ID for backend
     motherOtherOccupation: formData.motherOtherOccupation || "",
   });
 
@@ -33,33 +41,45 @@ const FamilyInformation = ({ formData = {} }) => {
     const nameFields = ["fatherName", "motherName"];
     const processedValue = nameFields.includes(name) ? capitalizeWords(value) : value;
     
-    setLocalFormData(prev => ({
-      ...prev,
-      [name]: processedValue
-    }));
+    // Handle sector selection - store both label and ID
+    if (name === "fatherSector" || name === "motherSector") {
+      const selectedSector = sectors.find(sector => sector.label === value);
+      const sectorId = selectedSector ? selectedSector.id : "";
+      
+      setLocalFormData(prev => ({
+        ...prev,
+        [name]: processedValue,
+        [`${name}Id`]: sectorId // Store the ID for backend
+      }));
+    } else if (name === "fatherOccupation" || name === "motherOccupation") {
+      const selectedOccupation = occupations.find(occupation => occupation.label === value);
+      const occupationId = selectedOccupation ? selectedOccupation.id : "";
+      
+      setLocalFormData(prev => ({
+        ...prev,
+        [name]: processedValue,
+        [`${name}Id`]: occupationId // Store the ID for backend
+      }));
+    } else {
+      setLocalFormData(prev => ({
+        ...prev,
+        [name]: processedValue
+      }));
+    }
   };
-  
-  // Occupation options for dropdown
-  const occupationOptions = [
-    "Government Employee",
-    "Private Employee", 
-    "Business Owner",
-    "Self Employed",
-    "Farmer",
-    "Teacher",
-    "Doctor",
-    "Engineer",
-    "Lawyer",
-    "Other"
-  ];
 
-  // Sector options for dropdown
-  const sectorOptions = [
-    "SELF EMPLOYED",
-    "PUBLIC",
-    "PRIVATE",
-    "Others"
-  ];
+  // Update parent when form data changes (prevent infinite loop)
+  useEffect(() => {
+    if (onSuccess && Object.keys(localFormData).length > 0) {
+      onSuccess(localFormData);
+    }
+  }, [localFormData]);
+  
+  // Occupation options for dropdown - now fetched from API
+  const occupationOptions = occupations.map(occupation => occupation.label);
+
+  // Sector options for dropdown - now fetched from API
+  const sectorOptions = sectors.map(sector => sector.label);
 
   const fatherFields = [
     { label: "Father Name", name: "fatherName", placeholder: "Enter Father Name", type: "input", required: true },
@@ -83,6 +103,9 @@ const FamilyInformation = ({ formData = {} }) => {
 
   return (
     <>
+      {/* Error display for sectors loading */}
+     
+      
       {/* Father Information */}
       <div className={styles.family_info_section_general_form_row}>
         <div className={`${styles.family_info_section_general_sibling_container} ${styles.family_info_section_general_full_width}`}>
@@ -94,7 +117,8 @@ const FamilyInformation = ({ formData = {} }) => {
             {fatherFields.map((field, index) => {
               // Conditional visibility for Other Occupation field
               if (field.name === "fatherOtherOccupation") {
-                const isOtherSelected = localFormData.fatherOccupation === "Other";
+                const selectedOccupation = localFormData.fatherOccupation?.toLowerCase() || "";
+                const isOtherSelected = selectedOccupation.includes("other");
                 if (!isOtherSelected) {
                   return null; // Hide the field if "Other" is not selected
                 }
@@ -140,6 +164,12 @@ const FamilyInformation = ({ formData = {} }) => {
                     results={field.options}
                     required={field.required}
                     dropdownsearch={true}
+                    disabled={sectorsLoading || occupationsLoading}
+                    placeholder={
+                      (sectorsLoading || occupationsLoading) 
+                        ? "Loading..." 
+                        : field.placeholder
+                    }
                   />
                 ) : (
                   <Inputbox
@@ -174,7 +204,8 @@ const FamilyInformation = ({ formData = {} }) => {
             {motherFields.map((field, index) => {
               // Conditional visibility for Other Occupation field
               if (field.name === "motherOtherOccupation") {
-                const isOtherSelected = localFormData.motherOccupation === "Other";
+                const selectedOccupation = localFormData.motherOccupation?.toLowerCase() || "";
+                const isOtherSelected = selectedOccupation.includes("other");
                 if (!isOtherSelected) {
                   return null; // Hide the field if "Other" is not selected
                 }
@@ -220,6 +251,12 @@ const FamilyInformation = ({ formData = {} }) => {
                     results={field.options}
                     required={field.required}
                     dropdownsearch={true}
+                    disabled={sectorsLoading || occupationsLoading}
+                    placeholder={
+                      (sectorsLoading || occupationsLoading) 
+                        ? "Loading..." 
+                        : field.placeholder
+                    }
                   />
                 ) : (
                   <Inputbox
