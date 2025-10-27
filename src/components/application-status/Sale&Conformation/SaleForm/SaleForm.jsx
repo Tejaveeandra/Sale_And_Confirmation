@@ -71,7 +71,7 @@ const SaleForm = ({ onBack, initialData = {} }) => {
     return { ...allFormData, ...data };
   };
 
-  // Function to collect all data and send to backend
+  // Function to collect all data and send to backend (with payment)
   const submitCompleteSale = async (formDataToUse = null) => {
     setIsSubmitting(true);
     setError(null);
@@ -221,6 +221,134 @@ const SaleForm = ({ onBack, initialData = {} }) => {
       
     } catch (err) {
       console.error('Sale submission error:', err);
+      setError(err.message || 'Sale submission failed. Please try again.');
+      return { success: false, error: err.message };
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Function to submit sale only (without payment data) - for Sale & Conform button
+  const submitSaleOnly = async (formDataToUse = null) => {
+    setIsSubmitting(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      // Use provided form data or fall back to state
+      const dataToUse = formDataToUse || allFormData;
+      
+      console.log('🚀 === SALE & CONFORM CLICKED - PREPARING SALE-ONLY DATA === 🚀');
+      console.log('📊 Raw Form Data (Single Object):', dataToUse);
+      console.log('📋 Form Data Keys:', Object.keys(dataToUse));
+      console.log('📋 Form Data Values:', Object.values(dataToUse));
+      console.log('📊 Total Fields Collected:', Object.keys(dataToUse).length);
+      console.log('🔢 Application Number from URL:', applicationNo);
+      
+      // Transform data for backend API structure (without payment)
+      const backendData = {
+        // Personal Information
+        firstName: dataToUse.firstName || "",
+        lastName: dataToUse.surname || "",
+        genderId: parseInt(dataToUse.gender) || 0,
+        apaarNo: dataToUse.aaparNo || "",
+        dob: dataToUse.dateOfBirth ? new Date(dataToUse.dateOfBirth).toISOString() : new Date().toISOString(),
+        aadharCardNo: parseInt(dataToUse.aadharCardNo) || 0,
+        quotaId: parseInt(dataToUse.quota) || 0,
+        proReceiptNo: parseInt(dataToUse.proReceiptNo) || 0,
+        admissionTypeId: parseInt(dataToUse.admissionType) || 0,
+        admissionReferedBy: dataToUse.admissionReferredBy || "",
+        appSaleDate: new Date().toISOString(),
+        fatherName: dataToUse.fatherName || "",
+        fatherMobileNo: parseInt(dataToUse.phoneNumber) || 0,
+        
+        // Orientation Information - Use ID fields that are already available
+        academicYearId: parseInt(dataToUse.academicYearId) || (() => {
+          // Extract year from academic year string like "A.Y 2025-2026" -> "25"
+          if (dataToUse.academicYear && typeof dataToUse.academicYear === 'string') {
+            const yearMatch = dataToUse.academicYear.match(/(\d{4})/);
+            if (yearMatch) {
+              const fullYear = yearMatch[1];
+              const shortYear = fullYear.slice(-2); // Get last 2 digits (25 from 2025)
+              return parseInt(shortYear);
+            }
+          }
+          return 0;
+        })(),
+        branchId: parseInt(dataToUse.branchId) || 0,
+        studentTypeId: parseInt(dataToUse.studentTypeId) || 0,
+        classId: parseInt(dataToUse.joiningClassId) || 0,
+        orientationId: parseInt(dataToUse.orientationId) || 0,
+        appTypeId: parseInt(dataToUse.admissionType) || parseInt(dataToUse.admissionTypeId) || 1,
+        
+        // Address Information (nested object) - Use ID fields
+        addressDetails: {
+          doorNo: dataToUse.doorNo || "",
+          street: dataToUse.streetName || "",
+          landmark: dataToUse.landmark || "",
+          area: dataToUse.area || "",
+          cityId: parseInt(dataToUse.cityId) || 0,
+          mandalId: parseInt(dataToUse.mandalId) || 0,
+          districtId: parseInt(dataToUse.districtId) || 0,
+          pincode: parseInt(dataToUse.pincode) || 0,
+          stateId: parseInt(dataToUse.stateId) || 0,
+          createdBy: 0 // You may need to get this from user context
+        },
+        
+        // Additional fields
+        studAdmsNo: parseInt(applicationNo) || 0, // Use application number as admission number
+        proId: parseInt(dataToUse.proId) || 1, // Use actual PRO ID, default to 1
+        createdBy: 0 // You may need to get this from user context
+        
+        // Note: No paymentDetails object for sale-only submission
+      };
+      
+      console.log('🔄 === SALE-ONLY BACKEND DATA OBJECT READY === 🔄');
+      console.log('📤 Sale-Only Backend Data Object:', backendData);
+      console.log('📋 Backend Data Keys:', Object.keys(backendData));
+      console.log('📋 Backend Data Values:', Object.values(backendData));
+      console.log('📊 Backend Fields Count:', Object.keys(backendData).length);
+      console.log('🔢 ID Fields:', Object.entries(backendData).filter(([key, value]) => key.includes('Id')).map(([key, value]) => `${key}: ${value}`));
+      console.log('🚫 Payment Details: EXCLUDED (sale-only mode)');
+      console.log('🎯 === SALE-ONLY BACKEND DATA OBJECT COMPLETE === 🎯');
+      
+      // Call the sale-only API endpoint
+      const response = await fetch('http://localhost:8080/api/student-admissions-sale/create/sale/only', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // Add your auth token
+        },
+        body: JSON.stringify(backendData)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      console.log('📋 Response Content-Type:', contentType);
+      
+      let result;
+      if (contentType && contentType.includes('application/json')) {
+        result = await response.json();
+        console.log('✅ Sale-Only Backend Response (JSON):', result);
+      } else {
+        // If not JSON, get as text but still treat as success if HTTP status is OK
+        const textResponse = await response.text();
+        console.log('✅ Sale-Only Backend Response (Text):', textResponse);
+        result = { message: 'Sale data saved successfully', textResponse: textResponse };
+      }
+      
+      // Show success page after successful database submission (HTTP 200)
+      console.log('🎉 Sale-only submission successful - showing success page');
+      setSuccess(true);
+      setShowSuccess(true); // Show success page only after backend success
+      return { success: true, data: result };
+      
+    } catch (err) {
+      console.error('Sale-only submission error:', err);
       setError(err.message || 'Sale submission failed. Please try again.');
       return { success: false, error: err.message };
     } finally {
@@ -395,6 +523,7 @@ const SaleForm = ({ onBack, initialData = {} }) => {
               onPaymentSuccess={handlePaymentSuccess}
               onSaleAndConform={handleSaleAndConform}
               onSubmitCompleteSale={submitCompleteSale}
+              onSubmitSaleOnly={submitSaleOnly}
               isSubmitting={isSubmitting}
               formData={allFormData}
               onPaymentInfoSuccess={handlePaymentInfoSuccess}

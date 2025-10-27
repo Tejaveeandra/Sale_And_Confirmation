@@ -5,7 +5,7 @@ import {ReactComponent as BlueArrowIcon} from '../../../../assets/application-st
 import PaymentModal from './Paymentinfo/PaymentModal';
 import styles from './ActionButtons.module.css';
 
-const ActionButtons = ({ onPaymentSuccess, onSaleAndConform, onSubmitCompleteSale, isSubmitting, formData, onPaymentInfoSuccess }) => {
+const ActionButtons = ({ onPaymentSuccess, onSaleAndConform, onSubmitCompleteSale, onSubmitSaleOnly, isSubmitting, formData, onPaymentInfoSuccess }) => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const handleProceedToSale = () => {
@@ -17,8 +17,8 @@ const ActionButtons = ({ onPaymentSuccess, onSaleAndConform, onSubmitCompleteSal
     console.log('Sale & Conform clicked');
     console.log('Current form data before submission:', formData);
     
-    // Check if all required form data is available
-    const requiredFields = ['firstName', 'academicYear', 'doorNo', 'amount'];
+    // Check if all required form data is available (excluding payment fields)
+    const requiredFields = ['firstName', 'academicYear', 'doorNo'];
     const missingFields = requiredFields.filter(field => !formData[field]);
     
     if (missingFields.length > 0) {
@@ -26,9 +26,9 @@ const ActionButtons = ({ onPaymentSuccess, onSaleAndConform, onSubmitCompleteSal
       return;
     }
     
-    // Submit complete sale form
-    if (onSubmitCompleteSale) {
-      const result = await onSubmitCompleteSale();
+    // Submit sale-only form (without payment data)
+    if (onSubmitSaleOnly) {
+      const result = await onSubmitSaleOnly();
       if (result && result.success) {
         if (onSaleAndConform) {
           onSaleAndConform();

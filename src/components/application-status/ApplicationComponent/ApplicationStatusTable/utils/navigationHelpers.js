@@ -24,6 +24,9 @@ export const createInitialValues = (rowObj) => {
     status: rowObj.status || "",
     statusId: rowObj.statusId || rowObj.status_id || "",
     reason: rowObj.reason || "",
+    category: rowObj.category || rowObj.type || "college", // Add category field, default to college
+    academicYear: rowObj.academicYear || rowObj.year || rowObj.academic_year || "",
+    applicationFee: rowObj.applicationFee || rowObj.fee || rowObj.application_fee || "",
   };
 };
 

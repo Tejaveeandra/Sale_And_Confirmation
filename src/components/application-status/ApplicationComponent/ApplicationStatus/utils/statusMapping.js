@@ -13,6 +13,9 @@ export const reverseStatusMap = {
   "un sold": "UNSOLD",
   approved: "CONFIRMED",
   broken: "DAMAGED",
+  "payment pending": "PAYMENT_PENDING",
+  paymentpending: "PAYMENT_PENDING",
+  "payment_pending": "PAYMENT_PENDING",
   "": "UNKNOWN",
 };
 
@@ -44,6 +47,11 @@ export const mapBackendStatusToDisplay = (backendStatus) => {
     case "damaged":
     case "broken":
       displayStatus = "Damaged";
+      break;
+    case "payment pending":
+    case "paymentpending":
+    case "payment_pending":
+      displayStatus = "Payment Pending";
       break;
     default:
       displayStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();

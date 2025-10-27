@@ -34,4 +34,15 @@
     font-weight: 700;
     line-height: normal;
   }
+
+  .error_message {
+    color: #dc2626;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 5px;
+    padding: 5px 10px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 4px;
+  }
  

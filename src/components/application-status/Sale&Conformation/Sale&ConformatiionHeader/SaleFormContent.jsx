@@ -65,6 +65,9 @@ const SaleFormContent = ({ status, onBack, initialData = {}, showSuccess = false
   // Header data
   const headerCampus = locationInitialValues.campusName || locationInitialValues.campus || locationInitialValues.joinedCampus || persistentData.campus || "";
   const headerZone = locationInitialValues.zoneName || locationInitialValues.zone || locationInitialValues.district || persistentData.zone || "";
+  
+  // Determine category from location state or props
+  const category = locationInitialValues.category || initialData.category || "college"; // Default to college
 
   return (
     <div className={styles.saleFormContentContainer}>
@@ -81,6 +84,9 @@ const SaleFormContent = ({ status, onBack, initialData = {}, showSuccess = false
             applicationNo={applicationNo || ""}
             campusName={headerCampus}
             zoneName={headerZone}
+            academicYear={locationInitialValues.academicYear || initialData.academicYear || ""}
+            applicationFee={locationInitialValues.applicationFee || initialData.applicationFee || ""}
+            category={category}
           />
         </div>
        
@@ -100,3 +106,4 @@ const SaleFormContent = ({ status, onBack, initialData = {}, showSuccess = false
 };
 
 export default SaleFormContent;
+
